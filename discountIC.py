@@ -1,10 +1,6 @@
+import random
 import numpy as np
 import networkx as nx
-import matplotlib.pyplot as plt
-import random
-
-def random_sd(G: nx.Graph, k):
-    return [random.randint(0, G.number_of_nodes()-1) for _ in range(k)]
 
 def get_d(degree: list[list]|list[tuple]|nx.classes.reportviews.DegreeView) -> list:
     '''Get a list of degrees from a (converted) DegreeView'''
@@ -14,6 +10,9 @@ def get_v(degree: list[list]|list[tuple]|nx.classes.reportviews.DegreeView) -> l
     '''Get a list of verteces from a (converted) DegreeView'''
     return [v for v, d in degree]
 
+def random_sd(G: nx.Graph, k: int):
+    '''Output k randomly selected seeds from G'''
+    return random.sample(list(G.nodes()), k)
 
 def SD(G: nx.Graph, k: int) -> list[int]:
     seed = []
@@ -32,9 +31,9 @@ def SD(G: nx.Graph, k: int) -> list[int]:
 
     return seed
 
-def DDIC(G: nx.Graph, k: int,p: int = 0.01) -> list[int]:
+def DDIC(G: nx.Graph, k: int, p: int = 0.01) -> list[int]:
     seed = []
-    t = np.zeros(len(G))
+    t = {}
 
     dd = [list(d) for d in G.degree()]
 
@@ -42,6 +41,7 @@ def DDIC(G: nx.Graph, k: int,p: int = 0.01) -> list[int]:
         u = dd.pop(np.argmax(get_d(dd)))[0]
         seed.append(u)
         for v in G.neighbors(u):
+            t[v] = 0
             if v in seed:
                 break
             t[v] += 1
