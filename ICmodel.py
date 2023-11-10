@@ -3,10 +3,8 @@ source: https://hautahi.com/ic_comparison
 """
 
 import numpy as np
-import networkx as nx
-import matplotlib.pyplot as plt
 
-def propagate_nx(g,p,new_active):
+def propagate_nx(g,new_active):
     targets = []
     for node in new_active:
         targets += g.neighbors(node)
@@ -35,7 +33,7 @@ def IC(graph_object,S,p,mc):
         while new_active:
 
             # 1. Find out-neighbors for each newly active node
-            targets = propagate_nx(graph_object,p,new_active)
+            targets = propagate_nx(graph_object,new_active)
 
 
             # 2. Determine newly activated neighbors (set seed and sort for consistency)
@@ -68,7 +66,7 @@ def RanCas(graph_object,S,p):
     while new_active:
 
         # 1. Find out-neighbors for each newly active node
-        targets = propagate_nx(graph_object,p,new_active)
+        targets = propagate_nx(graph_object,new_active)
 
 
         # 2. Determine newly activated neighbors (set seed and sort for consistency)
