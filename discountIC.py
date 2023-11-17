@@ -1,6 +1,7 @@
 import random
 import numpy as np
 import networkx as nx
+from collections import defaultdict
 
 def get_d(degree: list[list]|list[tuple]|nx.classes.reportviews.DegreeView) -> list:
     '''Get a list of degrees from a (converted) DegreeView'''
@@ -33,7 +34,7 @@ def SD(G: nx.Graph, k: int) -> list[int]:
 
 def DDIC(G: nx.Graph, k: int, p: int = 0.01) -> list[int]:
     seed = []
-    t = {}
+    t = defaultdict(int)
 
     dd = [list(d) for d in G.degree()]
 
@@ -41,7 +42,7 @@ def DDIC(G: nx.Graph, k: int, p: int = 0.01) -> list[int]:
         u = dd.pop(np.argmax(get_d(dd)))[0]
         seed.append(u)
         for v in G.neighbors(u):
-            t[v] = 0
+            # t[v] = 0
             if v in seed:
                 break
             t[v] += 1

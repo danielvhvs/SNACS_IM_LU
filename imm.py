@@ -58,7 +58,7 @@ def sampling(G,k,eps,l,p):
     LB  = 1
     epsPrime = 2.0**(1/2)*eps
     maxRounds = int(max(max(np.log2(n), 1.0) - 1.0, 1.0))
-    for i in range(maxRounds):
+    for i in range(1,maxRounds+1):
         x = n/2.0**i
         theta_i = lambda_prime(epsPrime, k, l, n)/x
         while len(Rset) <= theta_i:
