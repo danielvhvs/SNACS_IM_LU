@@ -43,11 +43,12 @@ def node_selection(G,Rset,k):
 
 def generate_RR(G,p):
     RR = []
-    v = random.choice(G.nodes)
     success = np.random.uniform(0,1,len(G.edges)) < p
-    GprimeEdges = list(np.extract(success, G.edges))
+    x = list(G.edges)
+    GprimeEdges = [x[t] for t in range(len(x)) if success[t]]
     Gprime = G.edge_subgraph(GprimeEdges)
-    RRset = nx.node_connected_component(Gprime)
+    v = random.choice(list(Gprime.nodes))
+    RRset = nx.ancestors(Gprime,v)
     RR = list(RRset)
     return RR
 
@@ -56,7 +57,7 @@ def sampling(G,k,eps,l,p):
     Rset = []
     LB  = 1
     epsPrime = 2.0**(1/2)*eps
-    maxRounds = max(max(np.log2(n), 1.0) - 1.0, 1.0)
+    maxRounds = int(max(max(np.log2(n), 1.0) - 1.0, 1.0))
     for i in range(maxRounds):
         x = n/2.0**i
         theta_i = lambda_prime(epsPrime, k, l, n)/x

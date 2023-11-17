@@ -23,14 +23,20 @@ def NewGreedy(G: nx.Graph, k: int, p: int = 0.01) -> list[int]:
         for i in range(R):
             np.random.seed(i)
             success = np.random.uniform(0,1,len(G.edges)) < p
-
-            GprimeEdges = list(np.extract(success, G.edges))
+            x = list(G.edges)
+            GprimeEdges = [x[t] for t in range(len(x)) if success[t]]
             Gprime = G.edge_subgraph(GprimeEdges)
             RsL = [nx.descendants(Gprime,node) for node in seed]
             Rs = set(x for lst in RsL for x in lst)
-            for j in G.nodes():
+            for j in G.nodes:
                 if j in Rs or j in seed:
                     continue
-                s[j] += len(nx.descendants(Gprime,j))
+                try:
+                    s[j] += len(nx.descendants(Gprime,j))
+                except nx.NetworkXError:
+                    s[j] += 0
         seed.append(max(s, key=lambda key: s[key]))
     return seed
+
+
+# def CELFgreedy(G,k,R):
