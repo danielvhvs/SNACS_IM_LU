@@ -99,11 +99,9 @@ def select_seed(G, C, SN, MAP, k):
     return S
 
 
-lowbound = 1
-upperbound = 100
-
-
 def LGIM(G: nx.DiGraph | nx.Graph, k, p=0.01):
+    lowbound = 1
+    upperbound = 100
     S = set()
     if type(G) == nx.DiGraph:
         threshold = 1 / max(G.in_degree(), key=lambda x: x[1])[1]

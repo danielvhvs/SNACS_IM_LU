@@ -14,6 +14,11 @@ def lambda_prime(eps,k,l,n):
     numerator = left*right*n
     return numerator / eps**2
 
+def lambda_star(eps,k,l,n):
+    a = (l*np.log(n)+np.log(2))**(1/2)
+    b = ((1-1/np.e)*(np.log(NchooseK(n,k))+l*np.log(n)+np.log(2)))**(1/2)
+    return 2*n*((1-1/np.e)*a+b)**2*eps**(-2)
+
 def node_selection(G,Rset,k):
     seed = []
     spread = 0
@@ -69,7 +74,7 @@ def sampling(G,k,eps,l,p):
         if n*frac >= (1+epsPrime) * x:
             LB = n*frac/(1+epsPrime)
             break
-    theta = lambda_prime(epsPrime, k, l, n)/LB
+    theta = lambda_star(epsPrime, k, l, n)/LB
     while len(Rset) <= theta:
             RR = generate_RR(G,p)
             Rset.append(RR)
