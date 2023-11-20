@@ -10,6 +10,8 @@ import time
 import numpy as np
 import concurrent.futures
 import visualise
+import argparse
+import sys
 
 def run_model_with(G, k_max, p, mc, function):
     spread = []
@@ -93,17 +95,27 @@ def main():
     eps = 0.5
     l = 1
     
-    # G = nx.read_edgelist('./data/wiki-Vote.txt.gz', create_using=nx.DiGraph)
-    # path = "./results/wiki"
-    # algorithms = set_algorithms(G,p,mc,eps,l)
-    # save_runs_2(algorithms,G,k_max,p,mc,path)
-    # G = nx.read_edgelist('./data/email-Enron.txt.gz', create_using=nx.Graph)
-    # algorithms = set_algorithms(G,p,mc,eps,l)
-    # path = "./results/enron"
-    # save_runs_2(algorithms,G,k_max,p,mc,path)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-p", "--plot", help="whether to do runs or plot [run,spread,time,both]",default="run",type=str)
+    args = parser.parse_args()
+    plotting = args.plot
+    if plotting=="run":
+        G = nx.read_edgelist('./data/wiki-Vote.txt.gz', create_using=nx.DiGraph)
+        path = "./results/wiki"
+        algorithms = set_algorithms(G,p,mc,eps,l)
+        save_runs_2(algorithms,G,k_max,p,mc,path)
+        G = nx.read_edgelist('./data/email-Enron.txt.gz', create_using=nx.Graph)
+        algorithms = set_algorithms(G,p,mc,eps,l)
+        path = "./results/enron"
+        save_runs_2(algorithms,G,k_max,p,mc,path)
     
-    # visualise.plot_spread("./results/","wiki",["DegreeDiscountIC","SingleDiscount","imm"])
-    visualise.plot_time("./results/","wiki",["DegreeDiscountIC","SingleDiscount","imm"])
+    elif plotting=="spread":
+        visualise.plot_spread("./results/","wiki",["DegreeDiscountIC","SingleDiscount","imm"])
+    elif plotting=="time":
+        visualise.plot_time("./results/","wiki",["DegreeDiscountIC","SingleDiscount","imm"])
+    elif plotting=="both":
+        visualise.plot_both("./results/","wiki",["DegreeDiscountIC","SingleDiscount","imm"])
+    
     
     return
 

@@ -36,7 +36,7 @@ def extract_time(path,data_name,algs):
             for idx,line in enumerate(fread):
                 if idx==1:
                     split = line.split()
-                    time_list.append([eval(x) for x in split])
+                    time_list.append([eval(x)/1000 for x in split])
                 elif idx >1:
                     break
     return time_list
