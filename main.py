@@ -102,8 +102,9 @@ def main():
     # path = "./results/enron"
     # save_runs_2(algorithms,G,k_max,p,mc,path)
     
-    visualise.plot_spread("./results/","wiki",["DegreeDiscountIC","SingleDiscount","imm"])
-
+    # visualise.plot_spread("./results/","wiki",["DegreeDiscountIC","SingleDiscount","imm"])
+    visualise.plot_time("./results/","wiki",["DegreeDiscountIC","SingleDiscount","imm"])
+    
     return
 
 if __name__ == "__main__":
