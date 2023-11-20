@@ -9,6 +9,7 @@ import LGIM
 import time
 import numpy as np
 import concurrent.futures
+import visualise
 
 def run_model_with(G, k_max, p, mc, function):
     spread = []
@@ -71,35 +72,37 @@ def save_runs_2(algorithms,G,k_max,p,mc,path):
         concurrent.futures.wait(futures)
     return
 
-def main():
-    np.random.seed(42)
-    G = nx.read_edgelist('./data/wiki-Vote.txt.gz', create_using=nx.DiGraph)
-
-    k_max = 50
-    p = 0.01
-    mc = 20_000
-    eps = 0.5
-    l = 1
+def set_algorithms(G,p,mc,eps,l):
     # algorithms = {'DegreeDiscountIC': lambda k: dic.DDIC(G, k, p),
     #               'SingleDiscount': lambda k: dic.SD(G, k),
     #               'Random': lambda k: dic.random_sd(G, k),
     #               'imm':lambda k: imm.IMMartingales(G,k,eps,l,p),
     #               'lgim': lambda k: LGIM.LGIM(G, k, p),
     #             }
-    
     algorithms = {
                   "mixedgreedy":lambda k: gic.MixedGreedy(G, k, p,mc),
                 }
+    return algorithms
     
-    path = "./results/wiki"
-    save_runs_2(algorithms,G,k_max,p,mc,path)
+
+def main():
+    np.random.seed(42)
+    k_max = 50
+    p = 0.01
+    mc = 20_000
+    eps = 0.5
+    l = 1
     
-    G = nx.read_edgelist('./data/email-Enron.txt.gz', create_using=nx.Graph)
-    algorithms = {
-                  "mixedgreedy":lambda k: gic.MixedGreedy(G, k, p,mc),
-                }
-    path = "./results/enron"
-    save_runs_2(algorithms,G,k_max,p,mc,path)
+    # G = nx.read_edgelist('./data/wiki-Vote.txt.gz', create_using=nx.DiGraph)
+    # path = "./results/wiki"
+    # algorithms = set_algorithms(G,p,mc,eps,l)
+    # save_runs_2(algorithms,G,k_max,p,mc,path)
+    # G = nx.read_edgelist('./data/email-Enron.txt.gz', create_using=nx.Graph)
+    # algorithms = set_algorithms(G,p,mc,eps,l)
+    # path = "./results/enron"
+    # save_runs_2(algorithms,G,k_max,p,mc,path)
+    
+    visualise.plot_spread("./results/","wiki",["DegreeDiscountIC","SingleDiscount","imm"])
 
     return
 
