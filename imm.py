@@ -84,4 +84,4 @@ def IMMartingales(G,k,eps,l,p):
     l = l * (1+np.log(2)/np.log(len(G.nodes)))
     Rset = sampling(G,k,eps,l,p)
     seed,frac = node_selection(G,Rset,k)
-    return seed,frac
+    return seed
