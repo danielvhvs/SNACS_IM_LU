@@ -99,6 +99,7 @@ def main():
     parser.add_argument("-p", "--plot", help="whether to do runs or plot [run,spread,time,both]",default="run",type=str)
     args = parser.parse_args()
     plotting = args.plot
+    
     if plotting=="run":
         G = nx.read_edgelist('./data/wiki-Vote.txt.gz', create_using=nx.DiGraph)
         path = "./results/wiki"
@@ -110,11 +111,11 @@ def main():
         save_runs_2(algorithms,G,k_max,p,mc,path)
     
     elif plotting=="spread":
-        visualise.plot_spread("./results/","wiki",["DegreeDiscountIC","SingleDiscount","imm"])
+        visualise.plot_spread("./results/","wiki",["DegreeDiscountIC","SingleDiscount","imm","Random"])
     elif plotting=="time":
-        visualise.plot_time("./results/","wiki",["DegreeDiscountIC","SingleDiscount","imm"])
+        visualise.plot_time("./results/","wiki",["DegreeDiscountIC","SingleDiscount","imm","Random"])
     elif plotting=="both":
-        visualise.plot_both("./results/","wiki",["DegreeDiscountIC","SingleDiscount","imm"])
+        visualise.plot_both("./results/","wiki",["DegreeDiscountIC","SingleDiscount","imm","Random"])
     
     
     return
