@@ -116,26 +116,28 @@ def set_algorithms(G,p,mc,eps,l):
     #               'lgim': lambda k: LGIM.LGIM(G, k, p),
     #             }
     algorithms = {
-                #   'lgim': lambda k: LGIM.LGIM(G, k, p),
+                  'lgim': lambda k: LGIM.LGIM(G, k, p),
                 # 'Random': lambda k: dic.random_sd(G, k),
-                  'mixedgreedy':lambda k: gic.MixedGreedy(G,k,p,mc),
+                #   'mixedgreedy':lambda k: gic.MixedGreedy(G,k,p,mc),
                 }
     return algorithms
 
 def main():
     np.random.seed(42)
-    k_max = 10
+    k_max = 50
     p = 0.01
     mc = 20_000
     eps = 0.5
     l = 1
     
     parser = argparse.ArgumentParser()
-    parser.add_argument("-p", "--plot", help="whether to do runs or plot [run,spread,time,both]",default="run",type=str)
+    parser.add_argument("-r", "--running", help="whether to do runs or plot [run,spread,time,both]",default="run",type=str)
     parser.add_argument("-k", "--kvalue", help="the seed size to find",default=None,type=int)
+    parser.add_argument("-p", "--plot_data", help="the data to plot",default="wiki",type=str)
     args = parser.parse_args()
-    plotting = args.plot
+    running = args.running
     kvalue = args.kvalue
+    plot_data = args.plot_data
     
     if kvalue==None:
         sr_func = save_runs
@@ -143,7 +145,7 @@ def main():
         sr_func = save_runs_3
         k_max = kvalue
     
-    if plotting=="run":
+    if running=="run":
         G = nx.read_edgelist('./data/wiki-Vote.txt.gz', create_using=nx.DiGraph)
         path = "./results/wiki"
         algorithms = set_algorithms(G,p,mc,eps,l)
@@ -152,23 +154,26 @@ def main():
         algorithms = set_algorithms(G,p,mc,eps,l)
         path = "./results/enron"
         sr_func(algorithms,G,k_max,p,mc,path)
-    elif plotting=="wiki":
+    elif running=="wiki":
         G = nx.read_edgelist('./data/wiki-Vote.txt.gz', create_using=nx.DiGraph)
         path = "./results/wiki"
         algorithms = set_algorithms(G,p,mc,eps,l)
         sr_func(algorithms,G,k_max,p,mc,path)
-    elif plotting=="enron":
+    elif running=="enron":
         G = nx.read_edgelist('./data/email-Enron.txt.gz', create_using=nx.Graph)
         algorithms = set_algorithms(G,p,mc,eps,l)
         path = "./results/enron"
         sr_func(algorithms,G,k_max,p,mc,path)
     
-    elif plotting=="spread":
-        visualise.plot_spread("./results/","wiki",["DegreeDiscountIC","SingleDiscount","imm","Random"])
-    elif plotting=="time":
-        visualise.plot_time("./results/","wiki",["DegreeDiscountIC","SingleDiscount","imm","Random"])
-    elif plotting=="both":
-        visualise.plot_both("./results/","wiki",["DegreeDiscountIC","SingleDiscount","imm","Random"])
+    wiki = ["DegreeDiscountIC","SingleDiscount","imm","Random","lgim"]
+    enron = ["DegreeDiscountIC","SingleDiscount","imm","Random"]
+    alg_list = enron
+    if running=="spread":
+        visualise.plot_spread("./results/",plot_data,alg_list)
+    elif running=="time":
+        visualise.plot_time("./results/",plot_data,alg_list)
+    elif running=="both":
+        visualise.plot_both("./results/",plot_data,alg_list)
     
     
     return
