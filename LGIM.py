@@ -1,121 +1,107 @@
 import networkx as nx
+from queue import PriorityQueue
 
-
-def NAV(G: nx.Graph, u, p=0.01):
+def LFV(G: nx.Graph, u, p=0.01):
     val = 0
     for v in G.neighbors(u):
         val += p + (p * (p * len(set(G.neighbors(v)) - {u, v})))
     return val
 
-
-def EIOS(G, S, SN, p=0.01):
+def EIOS(G, S, SN, lfvlist: list, p=0.01):
+    lfv = dict(lfvlist)
     ret = 0
-
     for u in S:
         val = 0
-
         im = 1 - p
-
         for _ in set(S) - {u}:
             im *= 1 - p
-
         for v in SN:
-            val += p * NAV(G, v) * im
-
+            val += p * lfv[v] * im
         ret += val
     return val
 
-
-def select_source(G, pop):
+def select_source(G, pop, lfvlist):
     SN = set()
 
-    navlist = [(v, NAV(G, v)) for v in G.nodes]
+    lfv = list(lfvlist)
 
-    for i in range(1, pop):
-        new_source = max(navlist, key=lambda x: x[1])
-
+    for i in range(pop):
+        new_source = max(lfv, key=lambda x: x[1])
         SN = SN | {new_source[0]}
-
-        navlist.remove(new_source)
+        lfv.remove(new_source)
     return SN
 
-
-def seek_ancestor_MAP(G, SN, thr, p=0.01):
+def seek_ancestor_MAP(G: nx.Graph|nx.DiGraph, SN, thr, p=0.01):
     R = set()
     MAP = {}
     for v in SN:
         maxAP = {}.fromkeys(G.nodes(), 0)
-        Q = []
+        Q = PriorityQueue()
         maxAP[v] = 1
         visit = {}.fromkeys(G.nodes(), False)
-        Q.append((v, maxAP[v]))
+        Q.put((-maxAP[v], v))
 
-        while len(Q) > 0:
-            u, ap = Q.pop()
-            if visit[u] == True:
+        while Q.qsize() > 0:
+            u = Q.get()[1]
+            if visit[u]:
                 continue
             visit[u] = True
-            for n in G.neighbors(u):
-                new_ap = maxAP[u] * p
+            new_ap = maxAP[u] * p
+            for n in G.predecessors(u):
                 if new_ap > thr:
                     R = R | {n}
-                    if new_ap > maxAP[n] and visit[n] == False:
+                    if new_ap > maxAP[n] and not visit[n]:
                         maxAP[n] = new_ap
-                        Q.append((n, maxAP[n]))
-                        Q.sort(key=lambda x: x[1], reverse=True)
+                        Q.put((-maxAP[n], n))
         MAP[v] = maxAP
     return R, MAP
 
-
-def filter_candidates(G, SN, R: set, MAP, k):
+def filter_candidates(G, SN, R: set, MAP, k, lfvlist):
     C = set()
-    for _ in range(2 * k):
-        C = C | {max([(v, EIOS(G, v, SN)) for v in (R - C)], key=lambda x: x[1])[0]}
+    for _ in range(0, 2 * k):
+        C = C | {max([(v, EIOS(G, v, SN, lfvlist)) for v in (R - C)], key=lambda x: x[1])[0]}
     return C
 
-
-def select_seed(G, C, SN, MAP, k):
+def select_seed(G, C, SN, MAP, k, lfvlist):
     S = set()
-    Q = []
+    Q = PriorityQueue()
     T = {}
     for v in C:
-        inf = EIOS(G, {v}, SN)
+        inf = EIOS(G, {v}, SN, lfvlist)
         T[v] = 0
-        Q.append((v, -inf))
-        Q.sort()
-    v = Q.pop()[0]
+        Q.put((-inf, v))
+    v = Q.get()[1]
     S = S | {v}
-    for i in range(2, k):
-        for j in range(1, 2 * k):
-            v = Q.pop()[0]
+    for i in range(1, k):
+        for j in range(0, 2 * k):
+            v = Q.get()[1]
             if T[v] == i:
                 S = S | {v}
                 break
             else:
-                Sv = EIOS(G, S | {v}, SN) - EIOS(G, S, SN)
-                Q.append((v, -Sv))
-                Q.sort()
+                Sv = EIOS(G, S | {v}, SN, lfvlist) - EIOS(G, S, SN, lfvlist)
+                Q.put((-Sv, v))
                 T[v] = i
-    return S
+    return list(S)
 
 
 def LGIM(G: nx.DiGraph | nx.Graph, k, p=0.01):
-    lowbound = 1
-    upperbound = 100
-    S = set()
-    if type(G) == nx.DiGraph:
+    lowbound = 100
+    upperbound = 600
+    if isinstance(G, nx.DiGraph):
         threshold = 1 / max(G.in_degree(), key=lambda x: x[1])[1]
-    elif type(G) == nx.Graph:
+    elif isinstance(G, nx.Graph):
         threshold = 1 / max(G.degree(), key=lambda x: x[1])[1]
 
     x = 2 * G.number_of_edges() / G.number_of_nodes()
     pop = int(G.number_of_nodes() // (1 + x + x**2))
-    print(pop)
 
     pop = lowbound if pop <= lowbound else upperbound if pop >= upperbound else pop
 
-    SN = select_source(G, pop)
+    lfvlist = [(v, LFV(G, v)) for v in G.nodes]
+
+    SN = select_source(G, pop, lfvlist)
     R, MAP = seek_ancestor_MAP(G, SN, threshold)
-    C = filter_candidates(G, SN, R, MAP, k)
-    S = select_seed(G, C, SN, MAP, k)
+    C = filter_candidates(G, SN, R, MAP, k, lfvlist)
+    S = select_seed(G, C, SN, MAP, k, lfvlist)
     return S
