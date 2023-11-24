@@ -19,7 +19,7 @@ def run_model_with(G, k_max, p, mc, function):
     time_list = []
     for k in tqdm(range(1,k_max+1)):
         start = time.time()
-        S = function(k)
+        S = function['algo'](G, k, *function['args'])
         end = time.time()
         seed_list.append(S)
         time_list.append((end-start)*1000)
@@ -46,38 +46,24 @@ def save_runs(algorithms,G,k_max,p,mc,path):
                 fwrite.write(f"\n")
             fwrite.close()
         et = time.time()
-        print(f'writing overhead {(et - st)}')
+        print(et - st)
     return
 
 def single_run(G,k,p,mc,path,name,algo):
-    print(name, k)
     start = time.time()
     S = algo['algo'](G, k, *algo['args'])
     timing = time.time()-start
     spread = icm.IC(G, S, p, mc)[0]
     return S, timing, spread
-    # with open(path+name+"spread.txt","w") as fwrite:
-    #     fwrite.write(f"{k}\t{spread}\n")
-    #     fwrite.close()
-    # with open(path+name+"time.txt","w") as fwrite:
-    #     fwrite.write(f"{k}\t{timing}\n")
-    #     fwrite.close()
-    # with open(path+name+"seed.txt","w") as fwrite:
-    #     fwrite.write(f"{k}\t{S[0]}")
-    #     for j in range(1,len(S)):
-    #         fwrite.write(f"\t{S[j]}")
-    #     fwrite.write(f"\n")
-    #     fwrite.close()
 
-def save_runs_2(algorithms,G,k_max,p,mc,path):
-    st = time.time()
+def save_runs_2(algorithms,G,k_max,p,mc,path, n_workers):
     for name, algo in algorithms.items():
         spread_list = []
         seed_list = []
         time_list = []
-        with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=n_workers) as executor:
             futures = [executor.submit(single_run, G, i, p, mc, path, name, algo) for i in range(1,k_max+1)]
-            for future in futures:
+            for future in tqdm(futures):
                 seed, t, spread = future.result()
                 seed_list.append(seed)
                 time_list.append(t)
@@ -98,8 +84,6 @@ def save_runs_2(algorithms,G,k_max,p,mc,path):
                     fwrite.write(f"\t{seed_list[i][j]}")
                 fwrite.write(f"\n")
             fwrite.close()
-    print(time.time() - st)
-    sys.stdout.flush()
 
 def run_model_with_2(G, k_max, p, mc, function):
     spread = []
@@ -107,7 +91,7 @@ def run_model_with_2(G, k_max, p, mc, function):
     time_list = []
     k = k_max
     start = time.time()
-    S = function(k)
+    S = function['algo'](G, k, *function['args'])
     print(S)
     end = time.time()
     seed_list.append(S)
@@ -118,7 +102,7 @@ def run_model_with_2(G, k_max, p, mc, function):
 def save_runs_3(algorithms,G,k_max,p,mc,path):
     for name, algo in algorithms.items():
         start = time.time()
-        S = algo(k_max)
+        S = algo['algo'](G, k_max, *algo['args'])
         timing = time.time()-start
         spread = icm.IC(G, S, p, mc)[0]
         with open(path+name+str(k_max)+"spread.txt","w") as fwrite:
@@ -137,11 +121,11 @@ def save_runs_3(algorithms,G,k_max,p,mc,path):
 
 def set_algorithms(G,p,mc,eps,l):
     algorithms = {
-        'DegreeDiscountIC': {'algo': dic.DDIC, 'args': (p)},
-                #   'SingleDiscount': {'algo': dic.SD, 'args': (p)},
-                #   'Random': {'algo': dic.random_sd, 'args': (p)},
-                  'imm': {'algo': imm.IMMartingales, 'args': (eps,l,p)},
-                #   'lgim': {'algo': LGIM.LGIM, 'args': (p)},
+            # 'DegreeDiscountIC': {'algo': dic.DDIC, 'args': (p,)},
+            # 'SingleDiscount': {'algo': dic.SD, 'args': (p,)},
+            'Random': {'algo': dic.random_sd, 'args': ()},
+            # 'imm': {'algo': imm.IMMartingales, 'args': (eps,l,p)},
+            # 'lgim': {'algo': LGIM.LGIM, 'args': (p,)},
     #             }
     # algorithms = {
                 #   "mixedgreedy": {'algo': gic.MixedGreedy, 'args': (p, mc)},
@@ -161,13 +145,15 @@ def main():
     parser.add_argument("-r", "--running", help="whether to do runs or plot [run,spread,time,both]",default="run",type=str)
     parser.add_argument("-k", "--kvalue", help="the seed size to find",default=None,type=int)
     parser.add_argument("-p", "--plot_data", help="the data to plot",default="wiki",type=str)
+    parser.add_argument("-n", "--n_workers", help="number of workers",default="1",type=int)
     args = parser.parse_args()
     running = args.running
     kvalue = args.kvalue
     plot_data = args.plot_data
+    n_workers = args.n_workers
 
     if kvalue==None:
-        sr_func = save_runs
+        sr_func = save_runs_2
     else:
         sr_func = save_runs_3
         k_max = kvalue
@@ -176,21 +162,21 @@ def main():
         G = nx.read_edgelist('./data/wiki-Vote.txt.gz', create_using=nx.DiGraph)
         path = "./results/wiki"
         algorithms = set_algorithms(G,p,mc,eps,l)
-        sr_func(algorithms,G,k_max,p,mc,path)
+        sr_func(algorithms,G,k_max,p,mc,path, n_workers)
         G = nx.read_edgelist('./data/email-Enron.txt.gz', create_using=nx.Graph)
         algorithms = set_algorithms(G,p,mc,eps,l)
         path = "./results/enron"
-        sr_func(algorithms,G,k_max,p,mc,path)
+        sr_func(algorithms,G,k_max,p,mc,path,n_workers)
     elif running=="wiki":
         G = nx.read_edgelist('./data/wiki-Vote.txt.gz', create_using=nx.DiGraph)
         path = "./results/wiki"
         algorithms = set_algorithms(G,p,mc,eps,l)
-        sr_func(algorithms,G,k_max,p,mc,path)
+        sr_func(algorithms,G,k_max,p,mc,path, n_workers)
     elif running=="enron":
         G = nx.read_edgelist('./data/email-Enron.txt.gz', create_using=nx.Graph)
         algorithms = set_algorithms(G,p,mc,eps,l)
         path = "./results/enron"
-        sr_func(algorithms,G,k_max,p,mc,path)
+        sr_func(algorithms,G,k_max,p,mc,path,n_workers)
 
     wiki = ["DegreeDiscountIC","SingleDiscount","imm","Random","lgim"]
     enron = ["DegreeDiscountIC","SingleDiscount","imm","Random"]
@@ -201,7 +187,6 @@ def main():
         visualise.plot_time("./results/",plot_data,alg_list)
     elif running=="both":
         visualise.plot_both("./results/",plot_data,alg_list)
-
 
     return
 
