@@ -50,6 +50,7 @@ def save_runs(algorithms,G,k_max,p,mc,path):
     return
 
 def single_run(G,k,p,mc,path,name,algo):
+    print(name, k)
     start = time.time()
     S = algo['algo'](G, k, *algo['args'])
     timing = time.time()-start
@@ -98,7 +99,41 @@ def save_runs_2(algorithms,G,k_max,p,mc,path):
                 fwrite.write(f"\n")
             fwrite.close()
     print(time.time() - st)
+    sys.stdout.flush()
 
+def run_model_with_2(G, k_max, p, mc, function):
+    spread = []
+    seed_list = []
+    time_list = []
+    k = k_max
+    start = time.time()
+    S = function(k)
+    print(S)
+    end = time.time()
+    seed_list.append(S)
+    time_list.append((end-start)*1000)
+    spread.append(icm.IC(G, S, p, mc)[0])
+    return spread,seed_list,time_list
+
+def save_runs_3(algorithms,G,k_max,p,mc,path):
+    for name, algo in algorithms.items():
+        start = time.time()
+        S = algo(k_max)
+        timing = time.time()-start
+        spread = icm.IC(G, S, p, mc)[0]
+        with open(path+name+str(k_max)+"spread.txt","w") as fwrite:
+            fwrite.write(f"{spread}\n")
+            fwrite.close()
+        with open(path+name+str(k_max)+"time.txt","w") as fwrite:
+            fwrite.write(f"{timing}\n")
+            fwrite.close()
+        with open(path+name+str(k_max)+"seed.txt","w") as fwrite:
+            fwrite.write(f"{S[0]}")
+            for j in range(1,len(S)):
+                fwrite.write(f"\t{S[j]}")
+            fwrite.write(f"\n")
+            fwrite.close()
+    return
 
 def set_algorithms(G,p,mc,eps,l):
     algorithms = {
@@ -123,28 +158,49 @@ def main():
     l = 1
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-p", "--plot", help="whether to do runs or plot [run,spread,time,both]",default="run",type=str)
+    parser.add_argument("-r", "--running", help="whether to do runs or plot [run,spread,time,both]",default="run",type=str)
+    parser.add_argument("-k", "--kvalue", help="the seed size to find",default=None,type=int)
+    parser.add_argument("-p", "--plot_data", help="the data to plot",default="wiki",type=str)
     args = parser.parse_args()
-    plotting = args.plot
+    running = args.running
+    kvalue = args.kvalue
+    plot_data = args.plot_data
 
-    if plotting=="run":
+    if kvalue==None:
+        sr_func = save_runs
+    else:
+        sr_func = save_runs_3
+        k_max = kvalue
+
+    if running=="run":
         G = nx.read_edgelist('./data/wiki-Vote.txt.gz', create_using=nx.DiGraph)
         path = "./results/wiki"
         algorithms = set_algorithms(G,p,mc,eps,l)
-        print('wikivote for: ', algorithms)
-        save_runs_2(algorithms,G,k_max,p,mc,path)
-        print('wikivote done')
-        # G = nx.read_edgelist('./data/email-Enron.txt.gz', create_using=nx.Graph)
-        # algorithms = set_algorithms(G,p,mc,eps,l)
-        # path = "./results/enron"
-        # save_runs(algorithms,G,k_max,p,mc,path)
+        sr_func(algorithms,G,k_max,p,mc,path)
+        G = nx.read_edgelist('./data/email-Enron.txt.gz', create_using=nx.Graph)
+        algorithms = set_algorithms(G,p,mc,eps,l)
+        path = "./results/enron"
+        sr_func(algorithms,G,k_max,p,mc,path)
+    elif running=="wiki":
+        G = nx.read_edgelist('./data/wiki-Vote.txt.gz', create_using=nx.DiGraph)
+        path = "./results/wiki"
+        algorithms = set_algorithms(G,p,mc,eps,l)
+        sr_func(algorithms,G,k_max,p,mc,path)
+    elif running=="enron":
+        G = nx.read_edgelist('./data/email-Enron.txt.gz', create_using=nx.Graph)
+        algorithms = set_algorithms(G,p,mc,eps,l)
+        path = "./results/enron"
+        sr_func(algorithms,G,k_max,p,mc,path)
 
-    elif plotting=="spread":
-        visualise.plot_spread("./results/","wiki",["DegreeDiscountIC","SingleDiscount","imm","Random"])
-    elif plotting=="time":
-        visualise.plot_time("./results/","wiki",["DegreeDiscountIC","SingleDiscount","imm","Random"])
-    elif plotting=="both":
-        visualise.plot_both("./results/","wiki",["DegreeDiscountIC","SingleDiscount","imm","Random"])
+    wiki = ["DegreeDiscountIC","SingleDiscount","imm","Random","lgim"]
+    enron = ["DegreeDiscountIC","SingleDiscount","imm","Random"]
+    alg_list = enron
+    if running=="spread":
+        visualise.plot_spread("./results/",plot_data,alg_list)
+    elif running=="time":
+        visualise.plot_time("./results/",plot_data,alg_list)
+    elif running=="both":
+        visualise.plot_both("./results/",plot_data,alg_list)
 
 
     return
