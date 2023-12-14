@@ -105,7 +105,7 @@ def save_runs_3(algorithms,G,k_max,p,mc,path):
             fwrite.write(f"\n")
             fwrite.close()
 
-def set_algorithms(G,p,mc,eps,l):
+def set_algorithms(p,mc,eps,l):
     algorithms = {
             # 'DegreeDiscountIC': {'algo': dic.DDIC, 'args': (p,)},
             # 'SingleDiscount': {'algo': dic.SD, 'args': (p,)},
@@ -142,7 +142,7 @@ def main():
         sr_func = save_runs_3
         k_max = kvalue
 
-    algorithms = set_algorithms(G,p,mc,eps,l)
+    algorithms = set_algorithms(p,mc,eps,l)
     if running=="run":
         G = nx.read_edgelist('./data/wiki-Vote.txt.gz', create_using=nx.DiGraph)
         path = "./results/wiki"
