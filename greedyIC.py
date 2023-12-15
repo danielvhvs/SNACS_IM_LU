@@ -50,7 +50,7 @@ def CELFgreedy(G, k, p=0.01, mc=1000):
     # Find the first node with greedy algorithm
     # --------------------
     # Calculate the first iteration sorted list
-    marg_gain = [IC.IC(G, [node], p, mc) for node in G.nodes]
+    marg_gain = [IC.IC(G, [node], p, mc)[0] for node in G.nodes]
 
     # Create the sorted list of nodes and their marginal gain
     Q = sorted(zip(list(G.nodes), marg_gain), key=lambda x: x[1], reverse=True)
@@ -72,7 +72,7 @@ def CELFgreedy(G, k, p=0.01, mc=1000):
             current = Q[0][0]
 
             # Evaluate the spread function and store the marginal gain in the list
-            Q[0] = (current, IC.IC(G, S + [current], p, mc) - IC.IC(G, S, p, mc))
+            Q[0] = (current, IC.IC(G, S + [current], p, mc)[0] - IC.IC(G, S, p, mc)[0])
 
             # Re-sort the list
             Q = sorted(Q, key=lambda x: x[1], reverse=True)
@@ -132,7 +132,7 @@ def MixedGreedy(G, k, p=0.01, mc=1000):
             current = Q[0][0]
 
             # Evaluate the spread function and store the marginal gain in the list
-            Q[0] = (current, IC.IC(G, S + [current], p, mc) - IC.IC(G, S, p, mc))
+            Q[0] = (current, IC.IC(G, S + [current], p, mc)[0] - IC.IC(G, S, p, mc)[0])
 
             # Re-sort the list
             Q = sorted(Q, key=lambda x: x[1], reverse=True)

@@ -11,7 +11,6 @@ import numpy as np
 import concurrent.futures
 import visualise
 import argparse
-import sys
 
 def run_model_with(G, k_max, p, mc, function):
     spread = []
@@ -27,6 +26,7 @@ def run_model_with(G, k_max, p, mc, function):
     return spread,seed_list,time_list
 
 def save_runs(algorithms,G,k_max,p,mc,path):
+    """function for running sequential"""
     for name, algo in algorithms.items():
         st = time.time()
         spread,seed_list,time_list = run_model_with(G, k_max, p, mc, algo)
@@ -47,7 +47,6 @@ def save_runs(algorithms,G,k_max,p,mc,path):
             fwrite.close()
         et = time.time()
         print(et - st)
-    return
 
 def single_run(G,k,p,mc,path,name,algo):
     start = time.time()
@@ -57,6 +56,7 @@ def single_run(G,k,p,mc,path,name,algo):
     return S, timing, spread
 
 def save_runs_2(algorithms,G,k_max,p,mc,path, n_workers):
+    """function for running in parallel"""
     for name, algo in algorithms.items():
         spread_list = []
         seed_list = []
@@ -85,21 +85,8 @@ def save_runs_2(algorithms,G,k_max,p,mc,path, n_workers):
                 fwrite.write(f"\n")
             fwrite.close()
 
-def run_model_with_2(G, k_max, p, mc, function):
-    spread = []
-    seed_list = []
-    time_list = []
-    k = k_max
-    start = time.time()
-    S = function['algo'](G, k, *function['args'])
-    print(S)
-    end = time.time()
-    seed_list.append(S)
-    time_list.append((end-start)*1000)
-    spread.append(icm.IC(G, S, p, mc)[0])
-    return spread,seed_list,time_list
-
 def save_runs_3(algorithms,G,k_max,p,mc,path):
+    """function for running one single k value"""
     for name, algo in algorithms.items():
         start = time.time()
         S = algo['algo'](G, k_max, *algo['args'])
@@ -117,18 +104,15 @@ def save_runs_3(algorithms,G,k_max,p,mc,path):
                 fwrite.write(f"\t{S[j]}")
             fwrite.write(f"\n")
             fwrite.close()
-    return
 
-def set_algorithms(G,p,mc,eps,l):
+def set_algorithms(p,mc,eps,l):
     algorithms = {
             # 'DegreeDiscountIC': {'algo': dic.DDIC, 'args': (p,)},
             # 'SingleDiscount': {'algo': dic.SD, 'args': (p,)},
-            'Random': {'algo': dic.random_sd, 'args': ()},
+            # 'Random': {'algo': dic.random_sd, 'args': ()},
             # 'imm': {'algo': imm.IMMartingales, 'args': (eps,l,p)},
-            # 'lgim': {'algo': LGIM.LGIM, 'args': (p,)},
-    #             }
-    # algorithms = {
-                #   "mixedgreedy": {'algo': gic.MixedGreedy, 'args': (p, mc)},
+            'lgim': {'algo': LGIM.LGIM, 'args': (p,)},
+            #   "mixedgreedy": {'algo': gic.MixedGreedy, 'args': (p, mc)},
                 }
     return algorithms
 
@@ -158,29 +142,26 @@ def main():
         sr_func = save_runs_3
         k_max = kvalue
 
+    algorithms = set_algorithms(p,mc,eps,l)
     if running=="run":
         G = nx.read_edgelist('./data/wiki-Vote.txt.gz', create_using=nx.DiGraph)
         path = "./results/wiki"
-        algorithms = set_algorithms(G,p,mc,eps,l)
         sr_func(algorithms,G,k_max,p,mc,path, n_workers)
         G = nx.read_edgelist('./data/email-Enron.txt.gz', create_using=nx.Graph)
-        algorithms = set_algorithms(G,p,mc,eps,l)
         path = "./results/enron"
         sr_func(algorithms,G,k_max,p,mc,path,n_workers)
     elif running=="wiki":
         G = nx.read_edgelist('./data/wiki-Vote.txt.gz', create_using=nx.DiGraph)
         path = "./results/wiki"
-        algorithms = set_algorithms(G,p,mc,eps,l)
         sr_func(algorithms,G,k_max,p,mc,path, n_workers)
     elif running=="enron":
         G = nx.read_edgelist('./data/email-Enron.txt.gz', create_using=nx.Graph)
-        algorithms = set_algorithms(G,p,mc,eps,l)
         path = "./results/enron"
         sr_func(algorithms,G,k_max,p,mc,path,n_workers)
 
     wiki = ["DegreeDiscountIC","SingleDiscount","imm","Random","lgim"]
-    enron = ["DegreeDiscountIC","SingleDiscount","imm","Random"]
-    alg_list = enron
+    enron = ["DegreeDiscountIC","SingleDiscount","imm","Random", "lgim"]
+    alg_list = wiki
     if running=="spread":
         visualise.plot_spread("./results/",plot_data,alg_list)
     elif running=="time":
