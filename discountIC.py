@@ -1,19 +1,24 @@
 import random
-import numpy as np
-import networkx as nx
 from collections import defaultdict
 
-def get_d(degree: list[list]|list[tuple]|nx.classes.reportviews.DegreeView) -> list:
-    '''Get a list of degrees from a (converted) DegreeView'''
+import networkx as nx
+import numpy as np
+
+
+def get_d(degree: list[list] | list[tuple] | nx.classes.reportviews.DegreeView) -> list:
+    """Get a list of degrees from a (converted) DegreeView"""
     return [d for v, d in degree]
 
-def get_v(degree: list[list]|list[tuple]|nx.classes.reportviews.DegreeView) -> list:
-    '''Get a list of verteces from a (converted) DegreeView'''
+
+def get_v(degree: list[list] | list[tuple] | nx.classes.reportviews.DegreeView) -> list:
+    """Get a list of verteces from a (converted) DegreeView"""
     return [v for v, d in degree]
 
+
 def random_sd(G: nx.Graph, k: int):
-    '''Output k randomly selected seeds from G'''
+    """Output k randomly selected seeds from G"""
     return random.sample(list(G.nodes()), k)
+
 
 def SD(G: nx.Graph, k: int) -> list[int]:
     seed = []
@@ -32,6 +37,7 @@ def SD(G: nx.Graph, k: int) -> list[int]:
 
     return seed
 
+
 def DDIC(G: nx.Graph, k: int, p: int = 0.01) -> list[int]:
     seed = []
     t = defaultdict(int)
@@ -47,6 +53,6 @@ def DDIC(G: nx.Graph, k: int, p: int = 0.01) -> list[int]:
                 break
             t[v] += 1
             d_v = G.degree(v)
-            dd[get_v(dd).index(v)][1] = d_v - 2*t[v] - (d_v - t[v])*t[v]*p
+            dd[get_v(dd).index(v)][1] = d_v - 2 * t[v] - (d_v - t[v]) * t[v] * p
 
     return seed
