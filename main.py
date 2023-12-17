@@ -85,7 +85,7 @@ def save_runs_2(algorithms,G,k_max,p,mc,path, n_workers):
                 fwrite.write(f"\n")
             fwrite.close()
 
-def save_runs_3(algorithms,G,k_max,p,mc,path):
+def save_runs_3(algorithms,G,k_max,p,mc,path,n_workers):
     """function for running one single k value"""
     for name, algo in algorithms.items():
         start = time.time()
@@ -111,8 +111,8 @@ def set_algorithms(p,mc,eps,l):
             # 'SingleDiscount': {'algo': dic.SD, 'args': (p,)},
             # 'Random': {'algo': dic.random_sd, 'args': ()},
             # 'imm': {'algo': imm.IMMartingales, 'args': (eps,l,p)},
-            'lgim': {'algo': LGIM.LGIM, 'args': (p,)},
-            #   "mixedgreedy": {'algo': gic.MixedGreedy, 'args': (p, mc)},
+            # 'lgim': {'algo': LGIM.LGIM, 'args': (p,)},
+              "mixedgreedy": {'algo': gic.MixedGreedy, 'args': (p, mc)},
                 }
     return algorithms
 
@@ -159,15 +159,18 @@ def main():
         path = "./results/enron"
         sr_func(algorithms,G,k_max,p,mc,path,n_workers)
 
-    wiki = ["DegreeDiscountIC","SingleDiscount","imm","Random","lgim"]
+    wiki = ["DegreeDiscountIC","SingleDiscount","imm","Random","lgim","mixedgreedy"]
     enron = ["DegreeDiscountIC","SingleDiscount","imm","Random", "lgim"]
-    alg_list = wiki
+    dataList = {"wiki":wiki,"enron":enron}
+    alg_list = dataList[plot_data]
     if running=="spread":
         visualise.plot_spread("./results/",plot_data,alg_list)
     elif running=="time":
         visualise.plot_time("./results/",plot_data,alg_list)
     elif running=="both":
         visualise.plot_both("./results/",plot_data,alg_list)
+    elif running ==  "bar":
+        visualise.plot_time_bar("./results/",plot_data,alg_list)
 
     return
 
